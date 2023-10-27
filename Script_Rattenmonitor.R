@@ -51,14 +51,14 @@ st_crs(Data_Monitor_sf)<-st_crs(Limburg)
 ggplot(Data_Monitor_sf[which(Data_Monitor_sf$Maand==1),]) + 
   geom_sf(data=Limburg) +
   geom_sf(aes(size = Locaties, fill = Gif), shape = 21, alpha = 0.7) +
-  scale_fill_viridis_c(limits=c(100,27600),breaks=c(0,5000,10000,15000,20000,25000)) +
-  scale_size_continuous(limits = c(0, 90),breaks=c(0,30,60,90))
+  scale_fill_viridis_c(name="Gif (g)",limits=c(100,27600),breaks=c(0,5000,10000,15000,20000,25000)) +
+  scale_size_continuous(name="# Meldingen",limits = c(0, 90),breaks=c(0,30,60,90))
 
 ggplot(Data_Monitor_sf[which(Data_Monitor_sf$Maand==9),]) + 
   geom_sf(data=Limburg) +
   geom_sf(aes(size = Locaties, fill = Gif), shape = 21, alpha = 0.7) +
-  scale_fill_viridis_c(limits=c(100,27600),breaks=c(0,5000,10000,15000,20000,25000)) +
-  scale_size_continuous(limits = c(1, 90),breaks=c(0,30,60,90))
+  scale_fill_viridis_c(name="Gif (g)",limits=c(100,27600),breaks=c(0,5000,10000,15000,20000,25000)) +
+  scale_size_continuous(name="# Meldingen",limits = c(0, 90),breaks=c(0,30,60,90))
 
 
 ###################
