@@ -1,69 +1,5 @@
-# Rattenmonitortool - Draft script
 
-getwd()
-library(tidyverse)
-
-# Test visualisatie (Data VMM)
-
-# Read data
-VMM<-read.csv('./data/VMM_Data_Test.csv',sep=';')
-VMM$Gif<-VMM$Registratie.Hoeveelheid..gr.
-VMM$Gif<-as.numeric(VMM$Gif)
-
-# Data wrangling
-Data_Monitor<-aggregate(Gif ~ Gemeente + Maand , data = VMM, sum)
-
-Meldingen_Gemeenten<-VMM %>% count(Gemeente, Maand, Locatie.ID)
-Meldingen_Gemeenten$n<-rep(1,length.out=length(Meldingen_Gemeenten$n))
-Meldingen_Gemeenten_sum<-aggregate(n ~ Gemeente + Maand , data = Meldingen_Gemeenten, sum)
-
-Lon_Gemeente<-aggregate(Locatie.GPS.Lengte ~ Gemeente , data = VMM, mean)
-Lat_Gemeente<-aggregate(Locatie.GPS.Breedte ~ Gemeente , data = VMM, mean)
-Lon_Lat_Gemeente<-cbind.data.frame(Lon_Gemeente,Lat_Gemeente)
-
-Data_Monitor$Lon<-rep(NA,length.out=nrow(Data_Monitor))
-Data_Monitor$Lat<-rep(NA,length.out=nrow(Data_Monitor))
-Data_Monitor$Locaties<-rep(NA,length.out=nrow(Data_Monitor))
-
-for (i in 1:nrow(Data_Monitor)) {
-  Data_Monitor$Lon[i]<-Lon_Lat_Gemeente$Locatie.GPS.Lengte[which(Lon_Lat_Gemeente$Gemeente ==
-                                                                   Data_Monitor$Gemeente[i])]
-  Data_Monitor$Lat[i]<-Lon_Lat_Gemeente$Locatie.GPS.Breedte[which(Lon_Lat_Gemeente$Gemeente ==
-                                                                   Data_Monitor$Gemeente[i])]
-  Data_Monitor$Locaties[i]<-Meldingen_Gemeenten_sum$n[which(Meldingen_Gemeenten_sum$Gemeente ==
-                                                              Data_Monitor$Gemeente[i] & 
-                                                              Meldingen_Gemeenten_sum$Maand ==
-                                                              Data_Monitor$Maand[i])]
-}
-
-
-# Plot number of locations and poison per month per municipality
-library(sf)
-
-Provincies<-st_read('./data/Provincies_shapefile/BELGIUM_-_Provinces.shp')
-Limburg<-subset(Provincies,Provincies$NAME_2=="Limburg")
-ggplot()+ geom_sf(data=Limburg)
-
-Data_Monitor_sf <- st_as_sf(Data_Monitor, coords = c("Lon", "Lat"), 
-                   crs = "WGS 84", agr = "constant")
-st_crs(Data_Monitor_sf)<-st_crs(Limburg)
-
-ggplot(Data_Monitor_sf[which(Data_Monitor_sf$Maand==1),]) + 
-  geom_sf(data=Limburg) +
-  geom_sf(aes(size = Locaties, fill = Gif), shape = 21, alpha = 0.7) +
-  scale_fill_viridis_c(name="Gif (g)",limits=c(100,27600),breaks=c(0,5000,10000,15000,20000,25000)) +
-  scale_size_continuous(name="# Meldingen",limits = c(0, 90),breaks=c(0,30,60,90))
-
-ggplot(Data_Monitor_sf[which(Data_Monitor_sf$Maand==9),]) + 
-  geom_sf(data=Limburg) +
-  geom_sf(aes(size = Locaties, fill = Gif), shape = 21, alpha = 0.7) +
-  scale_fill_viridis_c(name="Gif (g)",limits=c(100,27600),breaks=c(0,5000,10000,15000,20000,25000)) +
-  scale_size_continuous(name="# Meldingen",limits = c(0, 90),breaks=c(0,30,60,90))
-
-
-###################
-
-# Test App
+# rattus app - V1
 
 library(shiny)
 library(leaflet)
@@ -71,10 +7,10 @@ library(leaflet)
 library(googlesheets4)
 #library(googledrive)
 library(data.table)
+library(gargle)
 
 # Enable writing to google sheet
-
-gs4_auth()
+gs4_auth(cache = ".secrets", email = "michiel.lathouwers@inbo.be")
 
 file_url<-"https://docs.google.com/spreadsheets/d/1vZ3F1sLUqvvIwrB5varsrT7y5fJbj_BR_TEuthay5PE/edit#gid=0"
 sheet_id<-as_sheets_id(file_url)
@@ -170,33 +106,9 @@ server <- function(input, output, session) {
   output$thankyoutext <- renderUI({
     to_be_done_at_submit()
   })
-
+  
 }
 
 # Run app
 
 shinyApp(ui, server)
-
-# TO DO: meerdere actions geeft meerdere rijen, werken met ID? Of verschillende acties in verschillende kolommen?
-#        zoom in van map wanneer clicken
-
-
-# Deploy app 
-library(rsconnect)
-library(shiny)
-
-# Run in command line for authorization token
-setwd("./app rattus")
-gs4_auth(email = "michiel.lathouwers@inbo.be", cache = ".secrets")
-
-#gitignore authorizatioin info
-usethis::use_git_ignore(".secrets")
-usethis::use_git_ignore("*/.secrets")
-
-## Deploy
-setwd("~/GitHub/rattus")
-rsconnect::deployApp("./app rattus")
-
-
-
-
