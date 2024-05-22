@@ -16,7 +16,6 @@ file_url<-"https://docs.google.com/spreadsheets/d/1vZ3F1sLUqvvIwrB5varsrT7y5fJbj
 sheet_id<-as_sheets_id(file_url)
 
 # App user interface
-
 ui <- fluidPage(
   # Application title
   h1("Meldpunt Bruine Rat Bestrijding", align = "center"),
@@ -29,19 +28,29 @@ ui <- fluidPage(
       h5(strong("Locatie (klik op de kaart):")),
       numericInput("lon", "Lengtegraad", 0, min = 1, max = 100),
       numericInput("lat", "Breedtegraad", 0, min = 1, max = 100),
+      selectInput("num", "Aantal ratten:",
+                  c(" " = NA,
+                    "1" = "1",
+                    "2-5" = "2-5",
+                    "6-10" = "6-10",
+                    "10+" = "10+")),
       checkboxGroupInput("action", "Actie (meerdere opties mogelijk):",
                          c("Mechanische bestrijding" = "mech",
                            "Preventie" = "prev",
                            "Rodenticide" = "rod")),
-      selectInput("rod", "Type rodenticide (indien van toepassing):",
-                  c(" " = NA,
-                    "Difenacoum 0,005%" = "dif_5",
-                    "Difenacoum 0,0025%" = "dif_25",
-                    "Bromadialone 0,005%" = "bro_5",
-                    "Bromadialone 0,0025%" = "bro_25",
-                    "Cholecalciferol" = "chol",
-                    "Ander" = "ander")),
-      numericInput("amount", "Hoeveelheid (g):", 0, min = 1, max = 1000),
+      conditionalPanel(
+        condition = "input.action.includes('rod')",
+        selectInput("rod", "Type rodenticide (indien van toepassing):",
+                    c(" " = NA,
+                      "Difenacoum 0,005%" = "dif_5",
+                      "Difenacoum 0,0025%" = "dif_25",
+                      "Bromadialone 0,005%" = "bro_5",
+                      "Bromadialone 0,0025%" = "bro_25",
+                      "Cholecalciferol" = "chol",
+                      "Ander" = "ander")),
+        numericInput("amount", "Hoeveelheid (g):", 0, min = 1, max = 1000),
+        checkboxInput("public", "Openbaar domein")
+      ),
       textInput("comment", "Opmerking:", value = ""),
       actionButton("submitbutton", "Indienen")
     ),
@@ -51,7 +60,6 @@ ui <- fluidPage(
     )
   )
 )
-
 
 # Server (with writing functionality)
 
@@ -87,9 +95,11 @@ server <- function(input, output, session) {
       date <- input$date,
       lon<-input$lon,
       lat<-input$lat,
+      num<-input$num,
       action<-input$action,
       rod<-input$rod,
       amount<-input$amount,
+      public<-input$public,
       comment<-input$comment
     )
     
