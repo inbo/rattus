@@ -59,7 +59,9 @@ plot<-ggplot(data, aes(x = PCA_Inv, y = Protrombinetijd,color=Geslacht)) +
        x = "inv PCA",
        y = "Protrombinetijd (s)") +
   theme_minimal() +
-  scale_x_continuous(breaks = seq(0, 0.1, by = 0.02))
+  scale_x_continuous(breaks = seq(0, 0.1, by = 0.02))+
+  scale_y_continuous(breaks = seq(0, 60, by = 10))+
+  ylim(0, 60)
 
 #trendlijn v
 
