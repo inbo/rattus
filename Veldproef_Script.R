@@ -112,3 +112,76 @@ plot_post<-ggplot(summary_data_post, aes(x = Week, y = mean_gewicht)) +
 
 library(gridExtra)
 grid.arrange(plot_pre, plot_post, ncol = 2)
+
+#Change from weight to opname
+
+# Bestrijding
+data_bestrijding$Opname<-40-data_bestrijding$Gewicht
+data_bestrijding<-data_bestrijding[which(data_bestrijding$Dag!=0),]
+summary_data <- data_bestrijding %>%
+  group_by(Dag) %>%
+  summarise(
+    mean_opname = mean(Opname),
+    sd_opname = sd(Opname),
+    se_opname = sd(Opname) / sqrt(n())
+  )
+
+ggplot(summary_data, aes(x = Dag, y = mean_opname)) +
+  geom_bar(stat = "identity", fill = "#F8766D") +
+  geom_errorbar(aes(ymin = mean_opname - se_opname, ymax = mean_opname + se_opname), width = 0.2) +
+  labs(title = "Bestrijding",
+       x = "Dag",
+       y = "Opname (g)") +
+  theme_minimal()+
+  ylim(0,40)
+
+#Pre census
+data_pre$Opname<-40-data_pre$Gewicht
+data_pre<-data_pre[which(data_pre$Week!=0),]
+summary_data_pre <- na.omit(data_pre) %>%
+  group_by(Week) %>%
+  summarise(
+    mean_Opname = mean(Opname),
+    sd_Opname = sd(Opname),
+    se_Opname = sd(Opname) / sqrt(n())
+  )
+
+plot_pre<-ggplot(summary_data_pre, aes(x = Week, y = mean_Opname)) +
+  geom_bar(stat = "identity", fill = "#00BFC4") +
+  geom_errorbar(aes(ymin = mean_Opname - se_Opname, ymax = mean_Opname + se_Opname), width = 0.2) +
+  labs(title = "Pre-Census",
+       x = "Week",
+       y = "Gemiddeld Opname lokaas (g)") +
+  theme_minimal()+
+  ylim(0,40)
+
+#Post
+data_post$Opname<-40-data_post$Gewicht
+data_post<-data_post[which(data_post$Week!=0),]
+summary_data_post <- na.omit(data_post) %>%
+  group_by(Week) %>%
+  summarise(
+    mean_Opname = mean(Opname),
+    sd_Opname = sd(Opname),
+    se_Opname = sd(Opname) / sqrt(n())
+  )
+
+add<-summary_data_post[1:2,]
+add$Week<-c(3,4)
+add$mean_Opname<-c(0,0)
+add$sd_Opname<-c(0,0)
+add$se_Opname<-c(0,0)
+summary_data_post<-rbind.data.frame(summary_data_post,add)
+
+plot_post<-ggplot(summary_data_post, aes(x = Week, y = mean_Opname)) +
+  geom_bar(stat = "identity", fill = "#00BFC4") +
+  geom_errorbar(aes(ymin = mean_Opname - se_Opname, ymax = mean_Opname + se_Opname), width = 0.2) +
+  labs(title = "Post-Census",
+       x = "Week                            ",
+       y = "") +
+  theme_minimal()
+
+library(gridExtra)
+grid.arrange(plot_pre, plot_post, ncol = 2)
+
+
