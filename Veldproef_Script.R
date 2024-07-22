@@ -131,7 +131,7 @@ ggplot(summary_data, aes(x = Dag, y = mean_opname)) +
   geom_errorbar(aes(ymin = mean_opname - se_opname, ymax = mean_opname + se_opname), width = 0.2) +
   labs(title = "Bestrijding",
        x = "Dag",
-       y = "Opname (g)") +
+       y = "Gemiddeld Opname lokaas(g)") +
   theme_minimal()+
   ylim(0,40)
 
@@ -179,7 +179,8 @@ plot_post<-ggplot(summary_data_post, aes(x = Week, y = mean_Opname)) +
   labs(title = "Post-Census",
        x = "Week                            ",
        y = "") +
-  theme_minimal()
+  theme_minimal()+
+  ylim(0,40)
 
 library(gridExtra)
 grid.arrange(plot_pre, plot_post, ncol = 2)
