@@ -9,8 +9,12 @@ library(googlesheets4)
 library(data.table)
 library(gargle)
 
+# Load environment variables
+readRenviron(".Renviron")
+email <- Sys.getenv("EMAIL")
+
 # Enable writing to google sheet
-gs4_auth(cache = ".secrets", email = "michiel.lathouwers@inbo.be")
+gs4_auth(cache = ".secrets", email = email)
 
 file_url<-"https://docs.google.com/spreadsheets/d/1vZ3F1sLUqvvIwrB5varsrT7y5fJbj_BR_TEuthay5PE/edit#gid=0"
 sheet_id<-as_sheets_id(file_url)
