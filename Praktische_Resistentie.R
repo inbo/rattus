@@ -78,7 +78,7 @@ m_line<-cbind.data.frame(x,y)
 #cutoff op grafiek laten zien
 
 plot +
-  geom_line(data = v_line, aes(x = x, y = y), linetype = "dashed", color = "#00BFC4")+
-  geom_line(data = m_line, aes(x = x, y = y), linetype = "dashed", color = "#F8766D")
+  geom_line(data = v_line, aes(x = x, y = y), color = "#00BFC4",linewidth=1)+
+  geom_line(data = m_line, aes(x = x, y = y), color = "#F8766D",linewidth=1)
 
 
