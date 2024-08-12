@@ -82,3 +82,48 @@ plot +
   geom_line(data = m_line, aes(x = x, y = y), color = "#F8766D",linewidth=1)
 
 
+#############################
+
+#analyse praktische resistentie
+
+library(googlesheets4)
+
+#read data bovenschelde
+gs4_auth()
+data <- read_sheet("https://docs.google.com/spreadsheets/d/1l0n8jdeQe-ZMlBwJ6b-g194EIGROKTqne04Ppsk1oCY/edit?gid=0#gid=0")
+
+data$Resistent<-unlist(data$Resistent)
+data$Resistent<-as.numeric(data$Resistent)
+table(data$Resistent)
+
+  #proportion of resistant rats
+5/69
+
+#read old data
+data_old<-read.csv("data/Data_PraktischeResistentie_2003_2010.csv",sep=";",header=T)
+table(data_old$log.pca.D)
+  
+  #proportion of resistant rats
+22/(289+22)
+
+#resistance by river basin
+table(data_old$Bekken,data_old$log.pca.D)
+
+  #proportion of resistant rats in bovenschelde
+2/46 #including non-2010
+2/44 #excluding non-2010
+
+#test if difference is signficant
+data_old_subset<-subset(data_old, data_old$Bekken=="Bovenschelde")
+data_old_subset<-data_old_subset[3:nrow(data_old_subset),] #remove non-2010
+data_old_subset$Year<-rep(2010,length.out=nrow(data_old_subset))
+data_old_subset$Resistent<-data_old_subset$log.pca.D
+data$Year<-rep(2024,length=nrow(data))
+
+Resistent <- c(data_old_subset$Resistent,data$Resistent)
+Year<-c(data_old_subset$Year,data$Year)
+
+model<-glm(Resistent ~ Year,family=binomial)
+summary(model)
+
+#non significant increase
