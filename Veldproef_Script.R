@@ -237,3 +237,39 @@ ggplot(ratten, aes(x = Station, y = n_cor, fill = test)) +
        fill="Periode") +
   theme_minimal()
 
+# Get  all data
+cam <- get_record_table(cam_data) %>% 
+  filter(Species == "Rattus norvegicus")
+
+# summarize per day
+summary_data <- cam %>%
+  group_by(Station, Date) %>%
+  summarize(total_observations = sum(n, na.rm = TRUE))
+
+# add periods
+summary_data$Period<-ifelse(as.POSIXct(summary_data$Date)<as.POSIXct("2024-05-25",format="%Y-%m-%d",tz="UTC"), "Pre-census",
+                            ifelse(as.POSIXct(summary_data$Date)>=as.POSIXct("2024-05-30",format="%Y-%m-%d",tz="UTC"), "Post-census", NA))
+
+#summarize
+summary_data <- summary_data %>%
+  group_by(Station, Period) %>%
+  summarise(
+    mean_observations = mean(total_observations),
+    sem_observations = sd(total_observations) / sqrt(n())
+  )
+
+# Setting the factor levels for 'test' to ensure correct order
+summary_data$Period <- factor(summary_data$Period, levels = c("Pre-census", "Post-census"))
+
+#plot
+ggplot(summary_data, aes(x = Station, y = mean_observations, fill = Period)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(aes(ymin = mean_observations - sem_observations, ymax = mean_observations + sem_observations),
+                position = position_dodge(width = 0.9), width = 0.25) +
+  labs(
+    title = "",
+    x = "Locatie",
+    y = "Gemiddeld aantal waarnemingen bruine rat per dag",
+    fill="Periode"
+  ) +
+  theme_minimal()
