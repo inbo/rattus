@@ -2,6 +2,7 @@
 data/veldproef-inbo-bruine-rat-*/
 *.zip
 **/datapackage.json
+**/deployments.csv
 
 # History files
 .Rhistory
