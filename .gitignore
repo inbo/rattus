@@ -1,3 +1,11 @@
+#Camera trap data
+data/veldproef-inbo-bruine-rat-*/
+*.zip
+**/datapackage.json
+**/deployments.csv
+**/media.csv
+**/observations.csv
+
 # History files
 .Rhistory
 .Rapp.history

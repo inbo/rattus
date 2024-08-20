@@ -2,6 +2,12 @@ library(ggplot2)
 library(sf)
 library(reshape2)
 library(tidyverse)
+library(devtools)
+devtools::install_github("inbo/fistools")
+library(fistools)
+library(googlesheets4)
+library(camtraptor)
+library(tidyverse)
 
 #MOLENS GEYSKENS
 
@@ -185,4 +191,85 @@ plot_post<-ggplot(summary_data_post, aes(x = Week, y = mean_Opname)) +
 library(gridExtra)
 grid.arrange(plot_pre, plot_post, ncol = 2)
 
+# Camera trap data analysis
 
+# read data
+readRenviron(".Renviron")
+download_gdrive_if_missing(gfileID = "15nggsbct4WBW_57mw9bE69lfkntfciTV",
+                           destfile = "data/veldproef-inbo-bruine-rat-20240813144457.zip",
+                           email = Sys.getenv("EMAIL"),
+                           update_always = TRUE)
+unzip("data/veldproef-inbo-bruine-rat-20240813144457.zip",exdir="data/veldproef-inbo-bruine-rat-20240813144457/")
+cam_data <- read_camtrap_dp(file="data/veldproef-inbo-bruine-rat-20240813144457/datapackage.json")
+
+# Get  subsets
+cam_precensus <- get_record_table(cam_data) %>% 
+  filter(Species == "Rattus norvegicus",
+         DateTimeOriginal < ymd_hms("2024-05-25 09:00:00")) %>% 
+  mutate(test = "pre-census")
+
+cam_postcensus <- get_record_table(cam_data) %>% 
+  filter(Species == "Rattus norvegicus",
+         DateTimeOriginal > ymd_hms("2024-05-30 09:00:00")) %>% 
+  mutate(test = "post-census")
+
+combined <- cam_precensus %>% 
+  add_row(cam_postcensus)
+
+ratten <- combined %>% 
+  group_by(Station, test) %>% 
+  summarise(n())
+
+#Correct for duration of deployment (pre= 25/4 tot 23/5; post= 30/5 tot 13/6)
+# 29 en 15 dagen
+ratten$n_cor <- ifelse(ratten$test == "pre-census", ratten$`n()` / 29,
+                       ifelse(ratten$test == "post-census", ratten$`n()` / 15, NA))
+
+# Setting the factor levels for 'test' to ensure correct order
+ratten$test <- factor(ratten$test, levels = c("pre-census", "post-census"))
+
+#plot
+ggplot(ratten, aes(x = Station, y = n_cor, fill = test)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(title = "",
+       x = "Station",
+       y = "Gemiddeld aantal bruine rat waarnemingen / dag",
+       fill="Periode") +
+  theme_minimal()
+
+# Get  all data
+cam <- get_record_table(cam_data) %>% 
+  filter(Species == "Rattus norvegicus")
+
+# summarize per day
+summary_data <- cam %>%
+  group_by(Station, Date) %>%
+  summarize(total_observations = sum(n, na.rm = TRUE))
+
+# add periods
+summary_data$Period<-ifelse(as.POSIXct(summary_data$Date)<as.POSIXct("2024-05-25",format="%Y-%m-%d",tz="UTC"), "Pre-census",
+                            ifelse(as.POSIXct(summary_data$Date)>=as.POSIXct("2024-05-30",format="%Y-%m-%d",tz="UTC"), "Post-census", NA))
+
+#summarize
+summary_data <- summary_data %>%
+  group_by(Station, Period) %>%
+  summarise(
+    mean_observations = mean(total_observations),
+    sem_observations = sd(total_observations) / sqrt(n())
+  )
+
+# Setting the factor levels for 'test' to ensure correct order
+summary_data$Period <- factor(summary_data$Period, levels = c("Pre-census", "Post-census"))
+
+#plot
+ggplot(summary_data, aes(x = Station, y = mean_observations, fill = Period)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(aes(ymin = mean_observations - sem_observations, ymax = mean_observations + sem_observations),
+                position = position_dodge(width = 0.9), width = 0.25) +
+  labs(
+    title = "",
+    x = "Locatie",
+    y = "Gemiddeld aantal waarnemingen bruine rat per dag",
+    fill="Periode"
+  ) +
+  theme_minimal()
