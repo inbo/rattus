@@ -101,6 +101,12 @@ table(data$Resistent)
 
 #read old data
 data_old<-read.csv("data/Data_PraktischeResistentie_2003_2010.csv",sep=";",header=T)
+
+
+data_old$Bekken[which(data_old$Bekken=="Brugse_Polders")]<-"Brugse Polder"
+data_old$Bekken[which(data_old$Bekken=="Gentse kanalen")]<-"Gentse Kanalen"
+data_old$Bekken[which(data_old$Bekken=="Ijzer ")]<-"Ijzer"
+
 table(data_old$log.pca.D)
   
   #proportion of resistant rats
@@ -108,6 +114,9 @@ table(data_old$log.pca.D)
 
 #resistance by river basin
 table(data_old$Bekken,data_old$log.pca.D)
+
+#genotype 
+table(data_old[which(data_old$log.pca.D==1),]$GEN)
 
   #proportion of resistant rats in bovenschelde
 2/46 #including non-2010

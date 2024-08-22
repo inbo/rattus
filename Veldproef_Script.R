@@ -3,7 +3,7 @@ library(sf)
 library(reshape2)
 library(tidyverse)
 library(devtools)
-devtools::install_github("inbo/fistools")
+#devtools::install_github("inbo/fistools")
 library(fistools)
 library(googlesheets4)
 library(camtraptor)
@@ -180,7 +180,7 @@ add$se_Opname<-c(0,0)
 summary_data_post<-rbind.data.frame(summary_data_post,add)
 
 plot_post<-ggplot(summary_data_post, aes(x = Week, y = mean_Opname)) +
-  geom_bar(stat = "identity", fill = "#00BFC4") +
+  geom_bar(stat = "identity", fill = "orange") +
   geom_errorbar(aes(ymin = mean_Opname - se_Opname, ymax = mean_Opname + se_Opname), width = 0.2) +
   labs(title = "Post-Census",
        x = "Week                            ",
@@ -272,4 +272,5 @@ ggplot(summary_data, aes(x = Station, y = mean_observations, fill = Period)) +
     y = "Gemiddeld aantal waarnemingen bruine rat per dag",
     fill="Periode"
   ) +
+  scale_fill_manual(values=c("#00BFC4","orange"))+
   theme_minimal()
