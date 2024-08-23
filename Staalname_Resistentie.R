@@ -99,3 +99,69 @@ ggplot() +
   scale_fill_manual(values = c("FALSE" = "red", "TRUE" = "green"), 
                     name = "Verzameld?") +
   theme(legend.position = "bottom")
+
+# Do the same for entire sampling campaign
+
+plot(Hokken_merged_subset)
+data_staalname$Hok
+
+Hokken_merged_subset <- Hokken_merged_subset %>%
+  mutate(Hok_present = Hok %in% data_staalname$Hok)
+
+ggplot() +
+  # Plot Province
+  geom_sf(data = Provinces[which(Provinces$FIRST_NAME=="Vlaanderen"|Provinces$FIRST_NAME=="Bruxelles" ),], fill = NA, color = "black", size = 0.5) +
+  theme_minimal() +
+  # Plot Hokken_merged_subset
+  geom_sf(data = Hokken_merged_subset, aes(fill = Hok_present), alpha=0.6) +
+  scale_fill_manual(values = c("FALSE" = "red", "TRUE" = "green"), 
+                    name = "Verzameld?") +
+  theme(legend.position = "bottom")
+
+#Add brussels
+# overzicht staalname resistentie
+
+shapefiles <- list.files(path = "data/kaart Brussel",
+                         pattern = "\\.shp$", full.names = TRUE)
+
+# Read  shapefile
+Brussel <- lapply(shapefiles, function(file) {
+  # Read the shapefile
+  sf_obj <- read_sf(file)
+})
+
+multipolygons<-Brussel[[1]]
+points<-Brussel[[2]]
+
+joined_data <- st_join(multipolygons, points, join = st_contains)
+
+# Add Hok column
+multipolygons_with_nummering <- joined_data %>%
+  mutate(Nummering = fid) %>%
+  select(-fid)
+
+Brussel_subset<-multipolygons_with_nummering[which(is.na(multipolygons_with_nummering$Nummering)==FALSE),]
+Brussel_subset$Hok<-paste0("BR",Brussel_subset$Nummering)
+
+#Presence
+
+Brussel_subset <- Brussel_subset %>%
+  mutate(Hok_present = Hok %in% data_staalname$Hok)
+
+#plot
+ggplot() +
+  # Plot Province
+  geom_sf(data = Provinces[which(Provinces$FIRST_NAME == "Vlaanderen" | Provinces$FIRST_NAME == "Bruxelles"),], fill = NA, color = "black", size = 0.5) +
+  # Plot Hokken_merged_subset
+  geom_sf(data = Hokken_merged_subset, aes(fill = Hok_present), alpha = 0.6) +
+  geom_sf(data = Brussel_subset, aes(fill = Hok_present), alpha = 0.6) +
+  scale_fill_manual(values = c("FALSE" = "red", "TRUE" = "green"), 
+                    name = "Staartpunt verzameld",
+                    labels = c("FALSE" = "Nee", "TRUE" = "Ja")) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    panel.grid = element_blank(),      # Remove grid
+    axis.text = element_blank(),       # Remove axis tick labels
+    axis.ticks = element_blank()       # Remove axis ticks
+  )
