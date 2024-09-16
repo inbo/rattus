@@ -274,3 +274,47 @@ ggplot(summary_data, aes(x = Station, y = mean_observations, fill = Period)) +
   ) +
   scale_fill_manual(values=c("#00BFC4","orange"))+
   theme_minimal()
+
+# Add simulated 5 min interval between subsequent triggers
+
+cam_interval <- cam %>%
+  group_by(Station) %>%
+  arrange(Station, DateTimeOriginal) %>%  # Make sure observations are ordered by time
+  mutate(time_diff_secs = as.numeric(difftime(DateTimeOriginal, lag(DateTimeOriginal), units = "secs"))) %>%
+  filter(is.na(time_diff_secs) | time_diff_secs >= 300)  # Keep first observation or those 5 minutes apart
+
+# summarize per day
+summary_data <- cam_interval %>%
+  group_by(Station, Date) %>%
+  summarize(total_observations = sum(n, na.rm = TRUE))
+
+# add periods
+summary_data$Period<-ifelse(as.POSIXct(summary_data$Date)<as.POSIXct("2024-05-25",format="%Y-%m-%d",tz="UTC"), "Pre-census",
+                            ifelse(as.POSIXct(summary_data$Date)>=as.POSIXct("2024-05-30",format="%Y-%m-%d",tz="UTC"), "Post-census", NA))
+
+#summarize
+summary_data <- summary_data %>%
+  group_by(Station, Period) %>%
+  summarise(
+    mean_observations = mean(total_observations),
+    sem_observations = sd(total_observations) / sqrt(n())
+  )
+
+# Setting the factor levels for 'test' to ensure correct order
+summary_data$Period <- factor(summary_data$Period, levels = c("Pre-census", "Post-census"))
+
+#plot
+plot_interval<-ggplot(summary_data, aes(x = Station, y = mean_observations, fill = Period)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(aes(ymin = mean_observations - sem_observations, ymax = mean_observations + sem_observations),
+                position = position_dodge(width = 0.9), width = 0.25) +
+  labs(
+    title = "",
+    x = "Locatie",
+    y = "Gemiddeld aantal waarnemingen bruine rat per dag",
+    fill="Periode"
+  ) +
+  scale_fill_manual(values=c("#00BFC4","orange"))+
+  theme_minimal()
+
+
