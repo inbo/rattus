@@ -165,3 +165,34 @@ ggplot() +
     axis.text = element_blank(),       # Remove axis tick labels
     axis.ticks = element_blank()       # Remove axis ticks
   )
+
+## Extract centroid coordinates
+Hokken_centroid
+
+# merge bekken en nummering for Hok (with leading zero)
+Hokken_centroid$Nummering <- as.character(Hokken_centroid$Nummering)
+Hokken_centroid$Nummering <- ifelse(nchar(Hokken_centroid$Nummering) == 1, 
+                                    paste0("0", Hokken_centroid$Nummering), 
+                                    Hokken_centroid$Nummering)
+
+Hokken_centroid$Hok<-paste0(Hokken_centroid$Bekken,Hokken_centroid$Nummering)
+
+#transform the CRS to WGS84
+Hokken_centroid<- st_transform(Hokken_centroid, crs = 4326)
+
+# Extract the longitude and latitude from the geometry column and add them as new columns
+Hokken_centroid$Lon_Centr <- st_coordinates(Hokken_centroid)[, 1]
+Hokken_centroid$Lat_Centr <- st_coordinates(Hokken_centroid)[, 2]
+
+# Perform  left join to add Lat_Centr and Lon_Centr to data_staalname
+data_staalname_updated <- data_staalname %>%
+  left_join(select(Hokken_centroid, Hok, Lat_Centr, Lon_Centr), by = "Hok")
+
+#copy paste to google spreadsheet, and do brussels manually
+
+#write.csv(data_staalname_updated$Lat_Centr, "Lat_Centr.csv", row.names = FALSE)
+#write.csv(data_staalname_updated$Lon_Centr, "Lon_Centr.csv", row.names = FALSE)
+
+# Transform the CRS to WGS84
+#points_wgs84 <- st_transform(points, crs = 4326)
+#View(points_wgs84)
