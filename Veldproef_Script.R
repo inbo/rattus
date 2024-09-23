@@ -318,3 +318,74 @@ plot_interval<-ggplot(summary_data, aes(x = Station, y = mean_observations, fill
   theme_minimal()
 
 
+##################################################################################
+####################  ANALYSE ####################################################
+##################################################################################
+
+library(glmmTMB)
+library(DHARMa)
+
+## Camera trap
+
+# All data to check species
+raw<-get_record_table(cam_data)
+unique(raw$Species)
+
+# Get rat data with 5 minute interval
+cam_interval
+
+# activity patterns
+
+# Ensure DateTimeOriginal is in proper datetime format
+cam_interval$DateTimeOriginal <- as.POSIXct(cam_interval$DateTimeOriginal)
+
+# Extract the hour from DateTimeOriginal
+cam_interval$hour <- format(cam_interval$DateTimeOriginal, "%H")
+
+# Convert hour to numeric for plotting
+cam_interval$hour <- as.numeric(cam_interval$hour)
+
+# Create a plot of the activity pattern (number of observations per hour)
+ggplot(cam_interval, aes(x = hour, color = Station, group = Station)) +
+  geom_density(size = 1.2) +
+  labs(x = "Uur",
+       y = "Probabiliteit") +
+  theme_minimal() +
+  scale_x_continuous(breaks = seq(0, 24, by = 2)) + # Set breaks for hours
+  theme(legend.title = "Camera locatie") 
+
+# summarize per day
+summary_data <- cam_interval %>%
+  group_by(Station, Date) %>%
+  summarize(total_observations = sum(n, na.rm = TRUE))
+
+# add periods
+summary_data$Period<-ifelse(as.POSIXct(summary_data$Date)<as.POSIXct("2024-05-25",format="%Y-%m-%d",tz="UTC"), "Pre-census",
+                            ifelse(as.POSIXct(summary_data$Date)>=as.POSIXct("2024-05-30",format="%Y-%m-%d",tz="UTC"), "Post-census", NA))
+
+# Calculate mean and standard deviation for each Period across all stations
+summary_data %>%
+  group_by(Period) %>%
+  summarise(
+    mean_observations = mean(total_observations),
+    sd_observations = sd(total_observations)
+  )
+
+# Fit a Poisson GLMM
+poisson_model <- glmmTMB(total_observations ~ Period + (1|Station), 
+                       family = poisson, data = summary_data)
+
+# Check overdispersion
+overdispersion_value <- sum(residuals(poisson_model, type = "pearson")^2) / df.residual(poisson_model)
+simulationOutput <- simulateResiduals(fittedModel = poisson_model, plot = F)
+plot(simulationOutput)
+
+# Use neg. binomial
+
+model <- glmmTMB(total_observations ~ Period + (1|Station), 
+                       family = nbinom1, data = summary_data)
+simulationOutput <- simulateResiduals(fittedModel = model, plot = F)
+plot(simulationOutput)
+
+summary(model)
+
