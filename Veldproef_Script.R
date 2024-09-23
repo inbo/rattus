@@ -444,7 +444,23 @@ ggplot(pdf_data, aes(x = radians, y = density)) +
   theme(legend.title = element_text(size = 12))
 
 
-###############
+## Rodenticide
+
+Weight<-c(data[,3],data[,4],data[,5],data[,6],data[,14],data[,15])
+Opname<-40-Weight
+Station<-rep(seq(1:23),6)
+Period<-c(rep("Pre-census",length.out=nrow(data)*4),rep("Post-census",length.out=nrow(data)*2))
+Bait<-cbind.data.frame(Station,Opname,Period)
+
+# Make binary (eaten from bait =1, not eaten = 0)
+Bait$Opname_Bin<-rep(1,length.out=nrow(Bait))
+Bait$Opname_Bin[which(Bait$Opname == 0)]<- 0
+
+bait_model <- glmmTMB(Opname_Bin ~ Period + (1|Station), 
+                         family = binomial, data = Bait)
+simulationOutput <- simulateResiduals(fittedModel = bait_model, plot = F)
+plot(simulationOutput)
+summary(bait_model)
 
 
 
