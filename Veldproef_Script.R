@@ -318,3 +318,149 @@ plot_interval<-ggplot(summary_data, aes(x = Station, y = mean_observations, fill
   theme_minimal()
 
 
+##################################################################################
+####################  ANALYSE ####################################################
+##################################################################################
+
+library(glmmTMB)
+library(DHARMa)
+
+## Camera trap
+
+# All data to check species
+raw<-get_record_table(cam_data)
+unique(raw$Species)
+
+# Get rat data with 5 minute interval
+cam_interval
+
+# activity patterns
+
+# Ensure DateTimeOriginal is in proper datetime format
+cam_interval$DateTimeOriginal <- as.POSIXct(cam_interval$DateTimeOriginal)
+
+# Extract the hour from DateTimeOriginal
+cam_interval$hour <- format(cam_interval$DateTimeOriginal, "%H")
+
+# Convert hour to numeric for plotting
+cam_interval$hour <- as.numeric(cam_interval$hour)
+
+# summarize per day
+summary_data <- cam_interval %>%
+  group_by(Station, Date) %>%
+  summarize(total_observations = sum(n, na.rm = TRUE))
+
+# add periods
+summary_data$Period<-ifelse(as.POSIXct(summary_data$Date)<as.POSIXct("2024-05-25",format="%Y-%m-%d",tz="UTC"), "Pre-census",
+                            ifelse(as.POSIXct(summary_data$Date)>=as.POSIXct("2024-05-30",format="%Y-%m-%d",tz="UTC"), "Post-census", NA))
+
+# Calculate mean and standard deviation for each Period across all stations
+summary_data %>%
+  group_by(Period) %>%
+  summarise(
+    mean_observations = mean(total_observations),
+    sd_observations = sd(total_observations)
+  )
+
+# Fit a Poisson GLMM
+poisson_model <- glmmTMB(total_observations ~ Period + (1|Station), 
+                       family = poisson, data = summary_data)
+
+# Check overdispersion
+overdispersion_value <- sum(residuals(poisson_model, type = "pearson")^2) / df.residual(poisson_model)
+simulationOutput <- simulateResiduals(fittedModel = poisson_model, plot = F)
+plot(simulationOutput)
+
+# Use neg. binomial
+
+model <- glmmTMB(total_observations ~ Period + (1|Station), 
+                       family = nbinom1, data = summary_data)
+simulationOutput <- simulateResiduals(fittedModel = model, plot = F)
+plot(simulationOutput)
+
+summary(model)
+
+
+## Activiteit martijn 
+
+library(activity)
+library(overlap)
+
+rec_table <-
+  get_record_table(cam_data,
+                   stationCol = "locationName",
+                   exclude = NULL,
+                   minDeltaTime = 0,
+                   deltaTimeComparedTo = NULL
+  )
+rec_table<-
+  subset(rec_table,!is.na(rec_table$Time))
+
+rec_table<-rec_table%>% 
+  filter(Species == "Rattus norvegicus")
+
+lat<-rep(50.83624558822024,length=nrow(rec_table))
+lon<-rep(5.287749867385671,length=nrow(rec_table))
+
+coords<-matrix(c(lat,lon),ncol=2)
+
+rec_table$date <-
+  as.POSIXct(rec_table$Date, tz = "CET")
+
+rec_table$clo <- gettime(rec_table$DateTimeOriginal)
+rec_table$sunt <- sunTime(rec_table$clo,rec_table$DateTimeOriginal,coords)
+
+ggplot(rec_table, aes(x = sunt)) +
+  geom_density(size = 1.2) +
+  labs(title = element_blank(),       # Remove title
+       x = NULL,                      # Remove x-axis title
+       y = "Waarnemingprobabiliteit",            # Keep y-axis label
+       color = "Camera locatie") +     # Set the legend title for 'color'
+  theme_minimal() +
+  scale_x_continuous(breaks = c(0, pi/2, pi, 3*pi/2, 2*pi),  # Set custom axis ticks
+                     labels = c("Middernacht", "Zonsopkomst", "Middag", "Zonsondergang", "Middernacht")) + 
+  geom_vline(xintercept = pi/2, linetype = "dashed", color = "black", size = 1) +  # Zonsopkomst line
+  geom_vline(xintercept = 3*pi/2, linetype = "dashed", color = "black", size = 1) +  # Zonsondergang line
+  theme(legend.title = element_text(size = 12))
+
+sunAct <- fitact(rec_table$sunt, reps = 200, sample = "data")
+
+# sunAct$pdf contains the density data
+pdf_data <- as.data.frame(sunAct@pdf)  # Convert the 'pdf' slot to a data frame
+colnames(pdf_data) <- c("radians", "density", "se", "lcl", "ucl")  # Rename columns for clarity
+
+# Create the plot
+ggplot(pdf_data, aes(x = radians, y = density)) +
+  geom_line(color = "black", size = 1.2) +  # Main density line
+  geom_ribbon(aes(ymin = lcl, ymax = ucl), fill = "red", alpha = 0.2) +  # Confidence interval
+  labs(title = element_blank(),       # Remove title
+       x = NULL,
+       y="Dichtheid")+                      # Remove x-axis title
+  theme_minimal() +
+  scale_x_continuous(breaks = c(0, pi/2, pi, 3*pi/2, 2*pi),  # Set custom axis ticks
+                     labels = c("Middernacht", "Zonsopkomst", "Middag", "Zonsondergang", "Middernacht")) + 
+  geom_vline(xintercept = pi/2, linetype = "dashed", color = "black", size = 1) +  # Zonsopkomst line
+  geom_vline(xintercept = 3*pi/2, linetype = "dashed", color = "black", size = 1) +  # Zonsondergang line
+  theme(legend.title = element_text(size = 12))
+
+
+## Rodenticide
+
+Weight<-c(data[,3],data[,4],data[,5],data[,6],data[,14],data[,15])
+Opname<-40-Weight
+Station<-rep(seq(1:23),6)
+Period<-c(rep("Pre-census",length.out=nrow(data)*4),rep("Post-census",length.out=nrow(data)*2))
+Bait<-cbind.data.frame(Station,Opname,Period)
+
+# Make binary (eaten from bait =1, not eaten = 0)
+Bait$Opname_Bin<-rep(1,length.out=nrow(Bait))
+Bait$Opname_Bin[which(Bait$Opname == 0)]<- 0
+
+bait_model <- glmmTMB(Opname_Bin ~ Period + (1|Station), 
+                         family = binomial, data = Bait)
+simulationOutput <- simulateResiduals(fittedModel = bait_model, plot = F)
+plot(simulationOutput)
+summary(bait_model)
+
+
+
