@@ -423,6 +423,27 @@ ggplot(rec_table, aes(x = sunt)) +
   geom_vline(xintercept = 3*pi/2, linetype = "dashed", color = "black", size = 1) +  # Zonsondergang line
   theme(legend.title = element_text(size = 12))
 
+sunAct <- fitact(rec_table$sunt, reps = 200, sample = "data")
+
+# sunAct$pdf contains the density data
+pdf_data <- as.data.frame(sunAct@pdf)  # Convert the 'pdf' slot to a data frame
+colnames(pdf_data) <- c("radians", "density", "se", "lcl", "ucl")  # Rename columns for clarity
+
+# Create the plot
+ggplot(pdf_data, aes(x = radians, y = density)) +
+  geom_line(color = "black", size = 1.2) +  # Main density line
+  geom_ribbon(aes(ymin = lcl, ymax = ucl), fill = "red", alpha = 0.2) +  # Confidence interval
+  labs(title = element_blank(),       # Remove title
+       x = NULL,
+       y="Dichtheid")+                      # Remove x-axis title
+  theme_minimal() +
+  scale_x_continuous(breaks = c(0, pi/2, pi, 3*pi/2, 2*pi),  # Set custom axis ticks
+                     labels = c("Middernacht", "Zonsopkomst", "Middag", "Zonsondergang", "Middernacht")) + 
+  geom_vline(xintercept = pi/2, linetype = "dashed", color = "black", size = 1) +  # Zonsopkomst line
+  geom_vline(xintercept = 3*pi/2, linetype = "dashed", color = "black", size = 1) +  # Zonsondergang line
+  theme(legend.title = element_text(size = 12))
+
+
 ###############
 
 
