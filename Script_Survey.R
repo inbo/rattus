@@ -78,7 +78,6 @@ data_summary <- data_summary %>%
   filter(answer != "Ander" | row_number() == 1) %>%
   ungroup()
 
-
 # Create the pie chart
 ggplot(data_summary, aes(x = "", y = percentage, fill = answer)) +
   geom_bar(stat = "identity", width = 1) +
@@ -88,6 +87,42 @@ ggplot(data_summary, aes(x = "", y = percentage, fill = answer)) +
   geom_text(aes(label = paste0(round(percentage, 1), "%")),
             position = position_stack(vjust = 0.5)) +
   theme(legend.text = element_text(size = 8.5))
+
+#3
+
+# Summarize data: count occurrences of each value in the column
+data_summary <- data %>%
+  filter(`Zou u bereid zijn om deze gegevens door te geven aan INBO voor de rattenmonitortool?` != "NA") %>%  # Drop rows where the answer is "NA"
+  group_by(`Zou u bereid zijn om deze gegevens door te geven aan INBO voor de rattenmonitortool?`) %>%
+  summarize(count = n()) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+# Clean up the data
+colnames(data_summary)[1] <- "answer"
+#View(data_summary)
+data_summary <- data_summary %>%
+  mutate(answer = ifelse(answer %in% c("Ja","Nee"), answer, "Ander"))
+
+data_summary$percentage[which(data_summary$answer=="Ander")]<-sum(data_summary$percentage[which(data_summary$answer=="Ander")])
+
+data_summary <- data_summary %>%
+  group_by(answer) %>%
+  filter(answer != "Ander" | row_number() == 1) %>%
+  ungroup()
+
+# Create the pie chart
+ggplot(data_summary, aes(x = "", y = percentage, fill = answer)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y", start = 0) +
+  theme_void() +  # Remove background, axes, and grid
+  guides(fill = guide_legend(title = NULL))+
+  geom_text(aes(label = paste0(round(percentage, 1), "%")),
+            position = position_stack(vjust = 0.5)) +
+  theme(legend.text = element_text(size = 12))
+
+
+
+
 
 
 
