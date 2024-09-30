@@ -136,3 +136,7 @@ model<-glm(Resistent ~ Year,family=binomial)
 summary(model)
 
 #non significant increase
+
+#Check difenacoum resistance in old data
+table(data_old_subset$Resistent)
+data_old_subset[which(data_old_subset$Resistent==1),]
