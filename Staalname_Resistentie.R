@@ -196,3 +196,14 @@ data_staalname_updated <- data_staalname %>%
 # Transform the CRS to WGS84
 #points_wgs84 <- st_transform(points, crs = 4326)
 #View(points_wgs84)
+
+#Updated overview of sampling effort based on google sheet 
+
+# Get unique values in "Hok"
+unique_hok_values <- unique(na.omit(data_staalname_updated$Hok))
+
+# Derive "Bekken" by taking the first two letters of "Hok"
+sampling_bekken <- substr(unique_hok_values, 1, 2)
+
+# Create a table with the counts of each unique "Bekken"
+sampling_bekken_counts <- table(na.omit(sampling_bekken))
