@@ -279,5 +279,28 @@ ggplot() +
 subset(Hokken_Genotype, Hokken_Genotype$ID=="RAT-0517")
 table(Hokken_Genotype$Bekken)
 
-#
+#Plot the samples which need to be retested
+Data_Genotyping_subset <- Data_Genotyping %>% select(ID, Call_final_Kristof)
 
+# Perform the left join with only the genotype column
+Hokken_Genotype<- left_join(Hokken_merged_subset, Data_Genotyping_subset, by = "ID")
+
+Hokken_Genotype_Missing<-Hokken_Genotype %>%
+  filter(Call_final_Kristof == "MissingData" | Call_final_Kristof == "NoData")
+
+#Plot
+ggplot() +
+  # Plot Province
+  geom_sf(data = Provinces[which(Provinces$FIRST_NAME == "Vlaanderen" | Provinces$FIRST_NAME == "Bruxelles"),], 
+          fill = NA, color = "black", size = 0.5) +
+  # Plot Hokken_merged_subset
+  geom_sf(data = Hokken_Genotype_Missing, aes(fill = Call_final_Kristof), alpha = 0.6) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    panel.grid = element_blank(),      # Remove grid
+    axis.text = element_blank(),       # Remove axis tick labels
+    axis.ticks = element_blank()       # Remove axis ticks
+  )
+
+nrow(Hokken_Genotype_Missing)
