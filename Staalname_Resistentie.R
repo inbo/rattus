@@ -108,6 +108,12 @@ data_staalname$Hok
 Hokken_merged_subset <- Hokken_merged_subset %>%
   mutate(Hok_present = Hok %in% data_staalname$Hok)
 
+# Select only the ID and Hok columns from data_staalname
+data_staalname_subset <- data_staalname %>% select(Hok, ID)
+
+# Perform the left join with only the ID column
+Hokken_merged_subset <- left_join(Hokken_merged_subset, data_staalname_subset, by = "Hok")
+
 ggplot() +
   # Plot Province
   geom_sf(data = Provinces[which(Provinces$FIRST_NAME=="Vlaanderen"|Provinces$FIRST_NAME=="Bruxelles" ),], fill = NA, color = "black", size = 0.5) +
@@ -207,3 +213,51 @@ sampling_bekken <- substr(unique_hok_values, 1, 2)
 
 # Create a table with the counts of each unique "Bekken"
 sampling_bekken_counts <- table(na.omit(sampling_bekken))
+
+#######################################################
+
+# Read genotyping data
+Data_Genotyping<-read.csv("data/Resistentie_Genotyping.csv",sep=";",header=T)
+
+#Read LIMS data
+Data_LIMS<-read.csv("data/Resistentie_LIMS.csv",sep=";",header=T)
+
+#Fix format
+Data_LIMS$ID_LIMS<- gsub("-","__",Data_LIMS$ID_LIMS)
+Data_LIMS$ID_LIMS<- gsub("_1","_01",Data_LIMS$ID_LIMS)
+
+#Add ID to genotyping data ## IT'S ALREADY IN THERE
+Data_Genotyping
+
+#Add genotype data to hokken
+Hokken_merged_subset
+
+# Select only the Genotype and Hok columns from Genotype data
+Data_Genotyping$ID<-Data_Genotyping$ExternSampleID
+Data_Genotyping_subset <- Data_Genotyping %>% select(ExternSampleID, Call_final)
+
+# Perform the left join with only the genotype column
+test <- left_join(Hokken_merged_subset, data_staalname_subset, by = "Hok")
+
+#plot
+ggplot() +
+  # Plot Province
+  geom_sf(data = Provinces[which(Provinces$FIRST_NAME == "Vlaanderen" | Provinces$FIRST_NAME == "Bruxelles"),], fill = NA, color = "black", size = 0.5) +
+  # Plot Hokken_merged_subset
+  geom_sf(data = Hokken_merged_subset, aes(fill = Hok_present), alpha = 0.6) +
+  geom_sf(data = Brussel_subset, aes(fill = Hok_present), alpha = 0.6) +
+  scale_fill_manual(values = c("FALSE" = "red", "TRUE" = "green"), 
+                    name = "Staartpunt verzameld",
+                    labels = c("FALSE" = "Nee", "TRUE" = "Ja")) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    panel.grid = element_blank(),      # Remove grid
+    axis.text = element_blank(),       # Remove axis tick labels
+    axis.ticks = element_blank()       # Remove axis ticks
+  )
+
+
+
+
+
