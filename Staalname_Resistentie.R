@@ -229,7 +229,7 @@ Data_LIMS<-read.csv("data/Resistentie_LIMS.csv",sep=";",header=T)
 #Add genotype data to hokken
 # Select only the Genotype and Hok columns from Genotype data
 Data_Genotyping$ID
-Data_Genotyping_subset <- Data_Genotyping %>% select(ID, Call_final)
+Data_Genotyping_subset <- Data_Genotyping %>% select(ID, Call_final_Kristof)
 
 # Perform the left join with only the genotype column
 Hokken_Genotype<- left_join(Hokken_merged_subset, Data_Genotyping_subset, by = "ID")
@@ -238,8 +238,10 @@ Hokken_Genotype<- left_join(Hokken_merged_subset, Data_Genotyping_subset, by = "
 Hokken_Genotype_Brussels<- left_join(Brussel_subset, Data_Genotyping_subset, by = "ID")
 
 #Clean up
-Hokken_Genotype$Call_final[which(Hokken_Genotype$Call_final=="MissingData")]<-NA
-Hokken_Genotype$Call_final[which(Hokken_Genotype$Call_final=="NoData")]<-NA
+Hokken_Genotype$Call_final_Kristof[which(Hokken_Genotype$Call_final_Kristof=="M1M1?")]<-"M1M1"
+
+Hokken_Genotype$Call_final_Kristof[which(Hokken_Genotype$Call_final_Kristof=="MissingData")]<-NA
+Hokken_Genotype$Call_final_Kristof[which(Hokken_Genotype$Call_final_Kristof=="NoData")]<-NA
 
 # Remove duplicate rows based on the Hok column, keeping the first occurrence
 Hokken_Genotype <- Hokken_Genotype %>%
@@ -261,8 +263,8 @@ ggplot() +
   geom_sf(data = Provinces[which(Provinces$FIRST_NAME == "Vlaanderen" | Provinces$FIRST_NAME == "Bruxelles"),], 
           fill = NA, color = "black", size = 0.5) +
   # Plot Hokken_merged_subset
-  geom_sf(data = Hokken_Genotype, aes(fill = Call_final), alpha = 0.6) +
-  geom_sf(data = Hokken_Genotype_Brussels,aes(fill = Call_final), alpha = 0.6)+
+  geom_sf(data = Hokken_Genotype, aes(fill = Call_final_Kristof), alpha = 0.6) +
+  geom_sf(data = Hokken_Genotype_Brussels,aes(fill = Call_final_Kristof), alpha = 0.6)+
   # Manually set colors for Call_final factor levels
   scale_fill_manual(values = custom_colors, na.value = "lightgrey") +
   theme_minimal() +
@@ -276,4 +278,6 @@ ggplot() +
 #Check
 subset(Hokken_Genotype, Hokken_Genotype$ID=="RAT-0517")
 table(Hokken_Genotype$Bekken)
+
+#
 
