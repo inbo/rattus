@@ -154,6 +154,10 @@ Brussel_subset$Hok<-paste0("BR",Brussel_subset$Nummering)
 Brussel_subset <- Brussel_subset %>%
   mutate(Hok_present = Hok %in% data_staalname$Hok)
 
+
+# Perform the left join with only the ID column
+Brussel_subset <- left_join(Brussel_subset, data_staalname_subset, by = "Hok")
+
 #plot
 ggplot() +
   # Plot Province
@@ -222,33 +226,45 @@ Data_Genotyping<-read.csv("data/Resistentie_Genotyping.csv",sep=";",header=T)
 #Read LIMS data
 Data_LIMS<-read.csv("data/Resistentie_LIMS.csv",sep=";",header=T)
 
-#Fix format
-Data_LIMS$ID_LIMS<- gsub("-","__",Data_LIMS$ID_LIMS)
-Data_LIMS$ID_LIMS<- gsub("_1","_01",Data_LIMS$ID_LIMS)
-
-#Add ID to genotyping data ## IT'S ALREADY IN THERE
-Data_Genotyping
-
 #Add genotype data to hokken
-Hokken_merged_subset
-
 # Select only the Genotype and Hok columns from Genotype data
-Data_Genotyping$ID<-Data_Genotyping$ExternSampleID
-Data_Genotyping_subset <- Data_Genotyping %>% select(ExternSampleID, Call_final)
+Data_Genotyping$ID
+Data_Genotyping_subset <- Data_Genotyping %>% select(ID, Call_final)
 
 # Perform the left join with only the genotype column
-test <- left_join(Hokken_merged_subset, data_staalname_subset, by = "Hok")
+Hokken_Genotype<- left_join(Hokken_merged_subset, Data_Genotyping_subset, by = "ID")
 
-#plot
+# Perform the left join with only the genotype column BRUSSELS
+Hokken_Genotype_Brussels<- left_join(Brussel_subset, Data_Genotyping_subset, by = "ID")
+
+#Clean up
+Hokken_Genotype$Call_final[which(Hokken_Genotype$Call_final=="MissingData")]<-NA
+Hokken_Genotype$Call_final[which(Hokken_Genotype$Call_final=="NoData")]<-NA
+
+# Remove duplicate rows based on the Hok column, keeping the first occurrence
+Hokken_Genotype <- Hokken_Genotype %>%
+  distinct(Hok, .keep_all = TRUE)
+
+# Custom colors for the Call_final factor levels
+custom_colors <- c("NA" = "grey", 
+                   "M1W" = "coral",     # light red-pink-ish
+                   "M1M1" = "red", 
+                   "WW" = "darkslategrey", 
+                   "M2W" = "cornflowerblue", 
+                   "SPECIAAL" = "orange", 
+                   "M3W" = "yellow", 
+                   "M2M2" = "navy")
+
+# Plot with custom colors
 ggplot() +
   # Plot Province
-  geom_sf(data = Provinces[which(Provinces$FIRST_NAME == "Vlaanderen" | Provinces$FIRST_NAME == "Bruxelles"),], fill = NA, color = "black", size = 0.5) +
+  geom_sf(data = Provinces[which(Provinces$FIRST_NAME == "Vlaanderen" | Provinces$FIRST_NAME == "Bruxelles"),], 
+          fill = NA, color = "black", size = 0.5) +
   # Plot Hokken_merged_subset
-  geom_sf(data = Hokken_merged_subset, aes(fill = Hok_present), alpha = 0.6) +
-  geom_sf(data = Brussel_subset, aes(fill = Hok_present), alpha = 0.6) +
-  scale_fill_manual(values = c("FALSE" = "red", "TRUE" = "green"), 
-                    name = "Staartpunt verzameld",
-                    labels = c("FALSE" = "Nee", "TRUE" = "Ja")) +
+  geom_sf(data = Hokken_Genotype, aes(fill = Call_final), alpha = 0.6) +
+  geom_sf(data = Hokken_Genotype_Brussels,aes(fill = Call_final), alpha = 0.6)+
+  # Manually set colors for Call_final factor levels
+  scale_fill_manual(values = custom_colors, na.value = "lightgrey") +
   theme_minimal() +
   theme(
     legend.position = "bottom",
@@ -257,7 +273,7 @@ ggplot() +
     axis.ticks = element_blank()       # Remove axis ticks
   )
 
-
-
-
+#Check
+subset(Hokken_Genotype, Hokken_Genotype$ID=="RAT-0517")
+table(Hokken_Genotype$Bekken)
 
