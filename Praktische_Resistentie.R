@@ -146,7 +146,6 @@ data$ID<-paste0("RAT-",(data$ID+2000))
 
 Data_Genotyping<-read.csv("data/Resistentie_Genotyping.csv",sep=";",header=T)
 Data_Genotyping_subset <- Data_Genotyping %>% select(ID, Call_final_Kristof)
-
 Data_PraktischeResistentie<- left_join(data, Data_Genotyping_subset, by = "ID")
 
 table(Data_PraktischeResistentie$Call_final_Kristof)
