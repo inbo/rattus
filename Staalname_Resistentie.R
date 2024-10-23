@@ -197,11 +197,11 @@ Hokken_centroid$Lat_Centr <- st_coordinates(Hokken_centroid)[, 2]
 # Perform  left join to add Lat_Centr and Lon_Centr to data_staalname
 data_staalname_updated <- data_staalname %>%
   left_join(select(Hokken_centroid, Hok, Lat_Centr, Lon_Centr), by = "Hok")
-
+View(data_staalname_updated)
 #copy paste to google spreadsheet, and do brussels manually
 
-#write.csv(data_staalname_updated$Lat_Centr, "Lat_Centr.csv", row.names = FALSE)
-#write.csv(data_staalname_updated$Lon_Centr, "Lon_Centr.csv", row.names = FALSE)
+#write.csv(data_staalname_updated$Lat_Centr.y, "Lat_Centr.csv", row.names = FALSE)
+#write.csv(data_staalname_updated$Lon_Centr.y, "Lon_Centr.csv", row.names = FALSE)
 
 # Transform the CRS to WGS84
 #points_wgs84 <- st_transform(points, crs = 4326)
