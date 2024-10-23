@@ -304,3 +304,18 @@ ggplot() +
   )
 
 nrow(Hokken_Genotype_Missing)
+
+#Add genotype data to google spreadsheet staalname 2024
+data_staalname
+Data_Genotyping
+
+Data_Genotyping_subset <- Data_Genotyping %>% select(ID, Call_final_Kristof)
+Data_Staalname_Genotype<- left_join(data_staalname, Data_Genotyping_subset, by = "ID")
+
+Data_Staalname_Genotype <- Data_Staalname_Genotype %>%
+  distinct(ID, .keep_all = TRUE)
+
+write.csv(cbind.data.frame(Data_Staalname_Genotype$ID,
+                           Data_Staalname_Genotype$Hok,
+                           Data_Staalname_Genotype$Call_final_Kristof), "Staalname_Genotype.csv", row.names = FALSE)
+
