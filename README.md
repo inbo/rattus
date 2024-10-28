@@ -1,3 +1,3 @@
 # rattus
 
-Repo voor bruine rat onderzoek (resistentie, veldproef en monitortool)
+Bruine rat onderzoek (resistentie, veldproef en monitortool)
