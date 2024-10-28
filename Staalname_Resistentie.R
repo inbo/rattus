@@ -197,7 +197,7 @@ Hokken_centroid$Lat_Centr <- st_coordinates(Hokken_centroid)[, 2]
 # Perform  left join to add Lat_Centr and Lon_Centr to data_staalname
 data_staalname_updated <- data_staalname %>%
   left_join(select(Hokken_centroid, Hok, Lat_Centr, Lon_Centr), by = "Hok")
-View(data_staalname_updated)
+#View(data_staalname_updated)
 #copy paste to google spreadsheet, and do brussels manually
 
 #write.csv(data_staalname_updated$Lat_Centr.y, "Lat_Centr.csv", row.names = FALSE)
@@ -310,12 +310,70 @@ data_staalname
 Data_Genotyping
 
 Data_Genotyping_subset <- Data_Genotyping %>% select(ID, Call_final_Kristof)
-Data_Staalname_Genotype<- left_join(data_staalname, Data_Genotyping_subset, by = "ID")
+Data_Staalname_Genotype<- left_join(data_staalname
+                                    , Data_Genotyping_subset, by = "ID")
 
 Data_Staalname_Genotype <- Data_Staalname_Genotype %>%
   distinct(ID, .keep_all = TRUE)
 
-write.csv(cbind.data.frame(Data_Staalname_Genotype$ID,
-                           Data_Staalname_Genotype$Hok,
-                           Data_Staalname_Genotype$Call_final_Kristof), "Staalname_Genotype.csv", row.names = FALSE)
+#write.csv(cbind.data.frame(Data_Staalname_Genotype$ID,
+ #                          Data_Staalname_Genotype$Hok,
+ #                          Data_Staalname_Genotype$Call_final_Kristof), "Staalname_Genotype.csv", row.names = FALSE)
 
+#Plot resistence with points instead of 
+data_staalname_df<-as.data.frame(data_staalname)
+data_staalname_df$Lat<- as.numeric(sapply(data_staalname_df$Lat, function(x) if (is.null(x)) NA else x))
+data_staalname_df$Lon<- as.numeric(sapply(data_staalname_df$Lon, function(x) if (is.null(x)) NA else x))
+data_staalname_df$Lat_Centr<- as.numeric(sapply(data_staalname_df$Lat_Centr, function(x) if (is.null(x)) NA else x))
+data_staalname_df$Lon_Centr<- as.numeric(sapply(data_staalname_df$Lon_Centr, function(x) if (is.null(x)) NA else x))
+
+# Loop for putting centroid coordinates when real are missing
+for (i in 1:nrow(data_staalname_df)) {
+  # Check if Lat is NA, and if so, copy Lat_Centr to Lat
+  if (is.na(data_staalname_df$Lat[i])) {
+    data_staalname_df$Lat[i] <- data_staalname_df$Lat_Centr[i]
+  }
+  
+  # Check if Lon is NA, and if so, copy Lon_Centr to Lon
+  if (is.na(data_staalname_df$Lon[i])) {
+    data_staalname_df$Lon[i] <- data_staalname_df$Lon_Centr[i]
+  }
+}
+
+#Clean up
+data_staalname_df$Genotype[which(data_staalname_df$Genotype=="M1M1?")]<-"M1M1"
+
+data_staalname_df$Genotype[which(data_staalname_df$Genotype=="MissingData")]<-NA
+data_staalname_df$Genotype[which(data_staalname_df$Genotype=="NoData")]<-NA
+
+
+# Custom colors for the Call_final factor levels
+custom_colors <- c("NA" = "grey", 
+                   "M1W" = "coral",     # light red-pink-ish
+                   "M1M1" = "red", 
+                   "WW" = "grey", 
+                   "M2W" = "cornflowerblue", 
+                   "SPECIAAL" = "orange", 
+                   "M3W" = "yellow", 
+                   "M2M2" = "navy")
+
+# Filter out rows with NA in Lat or Lon
+data_staalname_df_no_na <- data_staalname_df %>%
+  filter(!is.na(Lat) & !is.na(Lon)& !is.na(Genotype))
+
+#View(data_staalname_df)
+
+# Convert the filtered dataframe to an sf object
+data_staalname_sf <- st_as_sf(data_staalname_df_no_na, coords = c("Lon", "Lat"), crs = 4326, remove = FALSE)
+
+# Plot the background map and points
+ggplot() +
+  # Plot Provinces
+  geom_sf(data = Provinces[Provinces$FIRST_NAME %in% c("Vlaanderen", "Bruxelles"),], 
+          fill = NA, color = "black", size = 0.5) +
+  # Plot points with colors based on Genotype
+  geom_sf(data = data_staalname_sf, aes(color = Genotype), size = 2) +
+  # Customize color scale with custom colors
+  scale_color_manual(values = custom_colors) +
+  labs(color = "Genotype") +
+  theme_minimal()
