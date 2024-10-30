@@ -348,14 +348,16 @@ data_staalname_df$Genotype[which(data_staalname_df$Genotype=="NoData")]<-NA
 
 
 # Custom colors for the Call_final factor levels
-custom_colors <- c("NA" = "grey", 
+custom_colors <- c(#"NA" = "grey", 
                    "M1W" = "coral",     # light red-pink-ish
                    "M1M1" = "red", 
-                   "WW" = "grey", 
+                   "WW" = "darkslategrey", 
                    "M2W" = "cornflowerblue", 
                    "SPECIAAL" = "orange", 
                    "M3W" = "yellow", 
-                   "M2M2" = "navy")
+                   "M2M2" = "navy",
+                   "M1M2" = "darkviolet",
+                   "M1M3" = "orange")
 
 # Filter out rows with NA in Lat or Lon
 data_staalname_df_no_na <- data_staalname_df %>%
@@ -377,3 +379,51 @@ ggplot() +
   scale_color_manual(values = custom_colors) +
   labs(color = "Genotype") +
   theme_minimal()
+
+table(data_staalname_sf$Genotype)
+
+#Plot hokken with new genotypes
+# Loop through each row of Hokken_Genotype
+Hokken_Genotype$Genotype<-rep(NA,length.out=nrow(Hokken_Genotype))
+for (i in 1:nrow(Hokken_Genotype)) {
+  # Find the index in data_staalname_df where IDs match
+  match_index <- which(data_staalname_df$ID == Hokken_Genotype$ID[i])
+  
+  # If a match is found, update Genotype, otherwise leave as is
+  if (length(match_index) > 0) {
+    Hokken_Genotype$Genotype[i] <- data_staalname_df$Genotype[match_index]
+  }
+}
+
+#Same for Brussels
+Hokken_Genotype_Brussels$Genotype<-rep(NA,length.out=nrow(Hokken_Genotype_Brussels))
+for (i in 1:nrow(Hokken_Genotype_Brussels)) {
+  # Find the index in data_staalname_df where IDs match
+  match_index <- which(data_staalname_df$ID == Hokken_Genotype_Brussels$ID[i])
+  
+  # If a match is found, update Genotype, otherwise leave as is
+  if (length(match_index) > 0) {
+    Hokken_Genotype_Brussels$Genotype[i] <- data_staalname_df$Genotype[match_index]
+  }
+}
+
+#Clean up NA's
+Hokken_Genotype$Genotype[which(is.na(Hokken_Genotype$Genotype)==TRUE)]<-""
+View(Hokken_Genotype)
+#PLot
+ggplot() +
+  # Plot Province
+  geom_sf(data = Provinces[which(Provinces$FIRST_NAME == "Vlaanderen" | Provinces$FIRST_NAME == "Bruxelles"),], 
+          fill = NA, color = "black", size = 0.5) +
+  # Plot Hokken_merged_subset
+  geom_sf(data = Hokken_Genotype, aes(fill = Genotype), alpha = 0.6) +
+  geom_sf(data = Hokken_Genotype_Brussels,aes(fill = Genotype), alpha = 0.6)+
+  # Manually set colors for Call_final factor levels
+  scale_fill_manual(values = custom_colors,na.value = "grey") +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    panel.grid = element_blank(),      # Remove grid
+    axis.text = element_blank(),       # Remove axis tick labels
+    axis.ticks = element_blank()       # Remove axis ticks
+  )
