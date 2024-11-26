@@ -387,6 +387,15 @@ ggplot() +
   labs(color = "Genotype") +
   theme_minimal()
 
+# Plot the background map and points, now with bekken
+ggplot() +
+  geom_sf(data = Bekkens, fill = NA, color = "black", size = 1.5) +
+  geom_sf(data = data_staalname_sf, aes(color = Genotype), size = 2) +
+  scale_color_manual(values = custom_colors) +
+  labs(color = "Genotype") +
+  theme_void() +
+  theme(legend.position = "bottom")
+
 table(data_staalname_sf$Genotype)
 
 #Plot hokken with new genotypes
@@ -472,5 +481,26 @@ ggplot() +
     axis.text = element_blank(),       # Remove axis tick labels
     axis.ticks = element_blank()       # Remove axis ticks
   )
+
+# Descriptive statistics staalname resistentie
+
+# Specify the URL or the sheet ID of the Google Spreadsheet
+url <- "https://docs.google.com/spreadsheets/d/1jVfoSk7o894IAEuVZP1WSLU52GyvzbvhH6xjAHwPSBU/edit?gid=0#gid=0"
+
+# Read the data from the Google Spreadsheet into R
+data_staalname <- read_sheet(url)
+
+# Filter data
+data_staalname<-data_staalname[which(is.na(data_staalname$Hok)==F),]
+data_staalname<-data_staalname[which(is.na(data_staalname$Genotype)==F),]
+data_staalname<-data_staalname[which(data_staalname$Genotype!="NA"),]
+
+# Summarize genotype
+table(data_staalname$Genotype)
+nrow(data_staalname)
+
+
+
+
 
 
