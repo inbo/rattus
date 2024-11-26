@@ -38,6 +38,12 @@ plot(Hokken_merged)
 Provinces<-read_sf("data/Provincies_shapefile/BELGIUM_-_Provinces.shp")
 Provinces<-st_transform(Provinces,"EPSG:31370")
 
+# Read bekkens
+
+Bekkens<-read_sf("data/Bekkens_shapefile/Wsbekken.shp")
+Bekkens<-st_transform(Bekkens,"EPSG:31370")
+plot(Bekkens)
+
 #Get province name to Hokken_merged
 
 Hokken_centroid<-st_centroid(Hokken_merged)
@@ -116,8 +122,10 @@ Hokken_merged_subset <- left_join(Hokken_merged_subset, data_staalname_subset, b
 
 ggplot() +
   # Plot Province
-  geom_sf(data = Provinces[which(Provinces$FIRST_NAME=="Vlaanderen"|Provinces$FIRST_NAME=="Bruxelles" ),], fill = NA, color = "black", size = 0.5) +
-  theme_minimal() +
+  #geom_sf(data = Provinces[which(Provinces$FIRST_NAME=="Vlaanderen"|Provinces$FIRST_NAME=="Bruxelles" ),], fill = NA, color = "black", size = 0.5) +
+  # Plot bekkens
+  geom_sf(data=Bekkens, fill=NA, color="darkslategrey",size=1)+
+  theme_void() +
   # Plot Hokken_merged_subset
   geom_sf(data = Hokken_merged_subset, aes(fill = Hok_present), alpha=0.6) +
   scale_fill_manual(values = c("FALSE" = "red", "TRUE" = "green"), 
@@ -353,7 +361,6 @@ custom_colors <- c(#"NA" = "grey",
                    "M1M1" = "red", 
                    "WW" = "darkslategrey", 
                    "M2W" = "cornflowerblue", 
-                   "SPECIAAL" = "orange", 
                    "M3W" = "yellow", 
                    "M2M2" = "navy",
                    "M1M2" = "darkviolet",
@@ -410,16 +417,54 @@ for (i in 1:nrow(Hokken_Genotype_Brussels)) {
 #Clean up NA's
 Hokken_Genotype$Genotype[which(is.na(Hokken_Genotype$Genotype)==TRUE)]<-""
 View(Hokken_Genotype)
-#PLot
+
+# #Update plot 
+
+Hokken_Genotype$Genotype <- as.character(Hokken_Genotype$Genotype)  # Convert to character
+Hokken_Genotype$Genotype[is.na(Hokken_Genotype$Genotype)] <- "Geen gegevens"  # Replace NA with label
+Hokken_Genotype$Genotype[which(Hokken_Genotype$Genotype=="NA")] <-"Geen gegevens"
+Hokken_Genotype$Genotype[which(Hokken_Genotype$Genotype=="")]<-"Geen gegevens"
+Hokken_Genotype$Genotype <- factor(Hokken_Genotype$Genotype)  # Convert back to factor
+
+unique(Hokken_Genotype$Genotype)
+
+Hokken_Genotype_Brussels$Genotype <- as.character(Hokken_Genotype_Brussels$Genotype)  # Repeat for Brussels data
+Hokken_Genotype_Brussels$Genotype[is.na(Hokken_Genotype_Brussels$Genotype)] <- "Geen gegevens"
+Hokken_Genotype_Brussels$Genotype <- factor(Hokken_Genotype_Brussels$Genotype)
+
+
+# Custom colors for the Call_final factor levels
+custom_colors <- c(
+  "M1M1" = "#ff0000",     # Adjusted from #f87e7e
+  "M1W" = "#ff44cc",    # Adjusted from #f888c8
+  "WW" = "#cccccc",      # Adjusted from #dcdddc
+  "M2W" = "#66ffff",     # Adjusted from #a9f9fd
+  "M3W" = "#ffff66",     # Adjusted from #fdf9c4
+  "M2M2" = "#6666ff",    # Adjusted from #828aff
+  "M1M2" = "#9966ff",    # Adjusted from #cb93f7
+  "M1M3" = "#ffcc66",    # Adjusted from #fad07e
+  "Geen gegevens" = "#2f4f4f" # Retained darkslategrey
+)
+
+# Load forcats package for reordering factors
+library(forcats)
+
+# Reorder levels of Genotype in both datasets
+Hokken_Genotype$Genotype <- fct_relevel(Hokken_Genotype$Genotype, "Geen gegevens", after = Inf)
+Hokken_Genotype_Brussels$Genotype <- fct_relevel(Hokken_Genotype_Brussels$Genotype, "Geen gegevens", after = Inf)
+
+
 ggplot() +
-  # Plot Province
-  geom_sf(data = Provinces[which(Provinces$FIRST_NAME == "Vlaanderen" | Provinces$FIRST_NAME == "Bruxelles"),], 
-          fill = NA, color = "black", size = 0.5) +
   # Plot Hokken_merged_subset
   geom_sf(data = Hokken_Genotype, aes(fill = Genotype), alpha = 0.6) +
-  geom_sf(data = Hokken_Genotype_Brussels,aes(fill = Genotype), alpha = 0.6)+
-  # Manually set colors for Call_final factor levels
-  scale_fill_manual(values = custom_colors,na.value = "grey") +
+  geom_sf(data = Hokken_Genotype_Brussels, aes(fill = Genotype), alpha = 0.6) +
+  # Plot bekken outlines
+  geom_sf(data = Bekkens, fill = NA, color = "black", size = 1.5) +
+  # Manually set colors for Genotype levels
+  scale_fill_manual(
+    values = custom_colors,  # Updated custom colors
+    na.translate = FALSE      # Ensure NA is not included separately
+  ) +
   theme_minimal() +
   theme(
     legend.position = "bottom",
@@ -427,3 +472,5 @@ ggplot() +
     axis.text = element_blank(),       # Remove axis tick labels
     axis.ticks = element_blank()       # Remove axis ticks
   )
+
+
