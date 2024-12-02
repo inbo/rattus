@@ -398,6 +398,12 @@ ggplot() +
 
 table(data_staalname_sf$Genotype)
 
+#table gentype per bekken
+
+data_staalname_sf$Bekken<-substr(data_staalname_sf$Hok, 1, 2)
+
+table_genotypes_bekken<-table(data_staalname_sf$Bekken, data_staalname_sf$Genotype)
+
 #Plot hokken with new genotypes
 # Loop through each row of Hokken_Genotype
 Hokken_Genotype$Genotype<-rep(NA,length.out=nrow(Hokken_Genotype))
