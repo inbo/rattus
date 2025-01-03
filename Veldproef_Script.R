@@ -191,6 +191,41 @@ plot_post<-ggplot(summary_data_post, aes(x = Week, y = mean_Opname)) +
 library(gridExtra)
 grid.arrange(plot_pre, plot_post, ncol = 2)
 
+#number of baitboxes visited ore vs post
+
+#across entire period
+
+lokaaspunt_never_exceeding_pre <- data_pre %>%
+  group_by(Lokaaspunt) %>%
+  summarise(max_opname = max(Opname, na.rm = TRUE)) %>%
+  filter(max_opname == 0) %>%
+  pull(Lokaaspunt)
+
+lokaaspunt_never_exceeding_post <- data_post %>%
+  group_by(Lokaaspunt) %>%
+  summarise(max_opname = max(Opname, na.rm = TRUE)) %>%
+  filter(max_opname == 0) %>%
+  pull(Lokaaspunt)
+
+#per value of moment
+
+lokaaspunt_per_moment_pre <- data_pre %>%
+  group_by(Lokaaspunt, Moment) %>%
+  summarise(max_opname = max(Opname, na.rm = TRUE), .groups = "drop") %>%
+  filter(max_opname == 0) %>%
+  group_by(Moment) %>%
+  summarise(lokaaspunt_never_exceeding_pre = list(Lokaaspunt))
+
+
+lokaaspunt_per_moment_post <- data_post %>%
+  group_by(Lokaaspunt, Moment) %>%
+  summarise(max_opname = max(Opname, na.rm = TRUE), .groups = "drop") %>%
+  filter(max_opname == 0) %>%
+  group_by(Moment) %>%
+  summarise(lokaaspunt_never_exceeding_post = list(Lokaaspunt))
+
+
+
 # Camera trap data analysis
 
 # read data
@@ -317,6 +352,12 @@ plot_interval<-ggplot(summary_data, aes(x = Station, y = mean_observations, fill
   scale_fill_manual(values=c("#00BFC4","orange"))+
   theme_minimal()
 
+#describe 
+
+summary_data
+mean_by_period <- summary_data %>%
+  group_by(Period) %>%
+  summarise(mean_of_mean_observations = mean(mean_observations, na.rm = TRUE))
 
 ##################################################################################
 ####################  ANALYSE ####################################################
