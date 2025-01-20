@@ -506,7 +506,124 @@ table(data_staalname$Genotype)
 nrow(data_staalname)
 
 
+## Visualizezations full sampling period
+library(readxl)
+data_staalname_sf$jaar<-rep(2024,length.out=nrow(data_staalname_sf))
+data_staalname_sf<-data_staalname_sf[which(data_staalname_sf$Genotype!="NA"),]
+data <- read_excel("data/2013 - 2019 BMK.xlsx", sheet = 1) 
+
+# Remove the geometry column and save as a CSV
+ <- st_drop_geometry(data_staalname_sf)
+
+# Write the cleaned dataset to a CSV file
+write.csv(data_staalname_sf_clean, "data_2024.csv", row.names = FALSE)
+
+
+# Remove geometry from `data_staalname_sf` and select necessary columns
+data_staalname_sf_selected <- data_staalname_sf %>%
+  st_drop_geometry() %>%  # Drop the geometry column
+  select(jaar, genotype = Genotype, Bekken)
+
+# Select necessary columns from `data`
+data_selected <- data %>%
+  select(jaar, mutatie, Bekken)
+
+# Standardize column names for consistency
+data_staalname_sf_selected <- data_staalname_sf_selected %>%
+  rename(mutatie = genotype)
+
+# Combine both datasets
+combined_data <- bind_rows(data_staalname_sf_selected, data_selected)
+
+# Fix Demer
+combined_data$Bekken[which(combined_data$Bekken=="DE")]<-"DM"
+unique(combined_data$Bekken)
+
+# Split alleles
+combined_data_long <- combined_data %>%
+  mutate(mutatie = gsub(" ", "", mutatie)) %>%  # Verwijder eventuele spaties
+  separate(mutatie, into = c("allel_1", "allel_2"), sep = "(?<=W|M1|M2|M3)(?=W|M1|M2|M3)", remove = FALSE) %>%  # Splits bij W, M1, M2 of M3
+  pivot_longer(cols = starts_with("allel_"), names_to = "allel_nummer", values_to = "allel") %>% 
+  mutate(allel_nummer = ifelse(allel_nummer == "allel_1", 1, 2)) %>%  # Zet allel_1 en allel_2 om naar 1 en 2
+  select(jaar, mutatie, Bekken, allel, allel_nummer)  # Behoud alleen relevante kolommen
+
+# Calculate the proportion for each year
+prop_M1 <- combined_data_long %>%
+  group_by(jaar) %>%
+  summarise(
+    Proportion_M1 = sum(allel == "M1") / n()
+  )
+
+prop_M2 <- combined_data_long %>%
+  group_by(jaar) %>%
+  summarise(
+    Proportion_M2 = sum(allel == "M2") / n()
+  )
+
+prop_M3 <- combined_data_long %>%
+  group_by(jaar) %>%
+  summarise(
+    Proportion_M3 = sum(allel == "M3") / n()
+  )
+
+prop_R <- combined_data_long %>%
+  group_by(jaar) %>%
+  summarise(
+    Proportion_W = sum(allel == "W") / n()
+  )
+
+prop_R$Proportion_R<- 1 - prop_R$Proportion_W
+
+# Create the plot
+ggplot() +
+  geom_line(data = prop_M1, aes(x = jaar, y = Proportion_M1), color = "blue", size = 1) +
+  geom_point(data = prop_M1, aes(x = jaar, y = Proportion_M1), color = "blue", size = 2) +
+  
+  geom_line(data = prop_M2, aes(x = jaar, y = Proportion_M2), color = "yellow", size = 1) +
+  geom_point(data = prop_M2, aes(x = jaar, y = Proportion_M2), color = "yellow", size = 2) +
+  
+  geom_line(data = prop_M3, aes(x = jaar, y = Proportion_M3), color = "red", size = 1) +
+  geom_point(data = prop_M3, aes(x = jaar, y = Proportion_M3), color = "red", size = 2) +
+  
+  geom_line(data = prop_R, aes(x = jaar, y = Proportion_R), color = "grey", size = 1) +
+  geom_point(data = prop_R, aes(x = jaar, y = Proportion_R), color = "grey", size = 2) +
+  
+  labs(
+    x = "Jaar",
+    y = "Proportie"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    plot.title = element_text(size = 16, face = "bold"),
+    legend.position = "none"
+  )
+
+# format for martijn
+data_staalname_sf_clean
+
+# Replace missing values in `exact_latitude` with corresponding values from `centroid_latitude`
+data_staalname_sf_clean$Lat <- ifelse(is.na(data_staalname_sf_clean$Lat), 
+                                      data_staalname_sf_clean$Lat_Centr, 
+                                      data_staalname_sf_clean$Lat)
+
+data_staalname_sf_clean$Lon <- ifelse(is.na(data_staalname_sf_clean$Lon), 
+                                      data_staalname_sf_clean$Lon_Centr, 
+                                      data_staalname_sf_clean$Lon)
 
 
 
+write.csv2(data_staalname_sf_clean, "data_2024.csv", row.names = FALSE)
 
+data_staalname_sf_clean <- st_as_sf(data_staalname_sf_clean, coords = c("Lon", "Lat"), crs = 4326)
+
+
+data_staalname_sf_clean<- st_transform(test, crs = 31370)
+
+data_staalname_sf_clean <- cbind(
+  st_coordinates(data_staalname_sf_clean), 
+  data_staalname_sf_clean
+)
+
+write.csv2(data_staalname_sf_clean, "data_2024.csv", row.names = FALSE)

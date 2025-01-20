@@ -17,6 +17,10 @@ data <- read_excel("data/Vragenlijst Rattenmonitor INBO_Complete.xlsx", sheet = 
 
 colnames(data)
 
+# which municipalities
+
+data$Gemeente
+
 #1 melding openbaar domein  --> actie ja/nee
 
 # Summarize data: count occurrences of each value in the column
@@ -149,7 +153,8 @@ plot_melding_privaat<-ggplot(data_summary, aes(x = 1, y = percentage, fill = ans
   geom_text(aes(label = paste0(round(percentage, 1), "%")),
             position = position_stack(vjust = 0.5), size = 4) +  # Ensure labels are positioned correctly
   guides(fill = guide_legend(reverse = TRUE)) +  # Reverse the legend order
-  theme(legend.position = "bottom",  # Move legend to the bottom
+  theme(legend.position = "bottom",# Move legend to the bottom
+        legend.text = element_text(size = 12),
         axis.text = element_blank(),  # Remove axis text
         axis.ticks = element_blank(),
         panel.grid = element_blank(),  # Remove all gridlines
@@ -320,6 +325,7 @@ plot_GBIF<-ggplot(data_summary, aes(x = 1, y = percentage, fill = answer_fill)) 
             position = position_stack(vjust = 0.5), size = 4) +  # Ensure labels are positioned correctly
   guides(fill = guide_legend(reverse = TRUE)) +  # Reverse the legend order
   theme(legend.position = "bottom",  # Move legend to the bottom
+        legend.text = element_text(size=12),
         axis.text = element_blank(),  # Remove axis text
         axis.ticks = element_blank(),
         panel.grid = element_blank(),  # Remove all gridlines
