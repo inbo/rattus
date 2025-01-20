@@ -204,9 +204,90 @@ ggplot(M2_table_cleaned, aes(x = Year, y = Value, color = BekkenNaam, group = Be
   )
 
 
+######################################################
+
+homozygosity_table<-homozygosity_table[-which(homozygosity_table$BekkenNaam=="BR"),]
+
+# Melt the data for ggplot
+homozygosity_table_melted <- melt(homozygosity_table, id.vars = "BekkenNaam", variable.name = "Year", value.name = "Value")
+homozygosity_table_melted$Year <- as.numeric(gsub("X", "", homozygosity_table_melted$Year)) # Clean up year column
 
 
+# Remove rows with NA values
+homozygosity_table_cleaned <- homozygosity_table_melted[!is.na(homozygosity_table_melted$Value), ]
+
+# Create the plot
+ggplot(homozygosity_table_cleaned, aes(x = Year, y = Value, color = BekkenNaam, group = BekkenNaam)) +
+  geom_line(size = 1) +
+  geom_point() +
+  labs(title="Homozygositeit - Algemeen",
+       x = "Jaar",
+       y = "Proportie",
+       color = "Bekken"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )
 
 
+######################################################
+
+homozygosity_table_M1
+
+# Melt the data for ggplot
+homozygosity_table_melted <- melt(homozygosity_table_M1, id.vars = "BekkenNaam", variable.name = "Year", value.name = "Value")
+homozygosity_table_melted$Year <- as.numeric(gsub("X", "", homozygosity_table_melted$Year)) # Clean up year column
+
+
+# Remove rows with NA values
+homozygosity_table_cleaned <- homozygosity_table_melted[!is.na(homozygosity_table_melted$Value), ]
+
+# Create the plot
+ggplot(homozygosity_table_cleaned, aes(x = Year, y = Value, color = BekkenNaam, group = BekkenNaam)) +
+  geom_line(size = 1) +
+  geom_point() +
+  labs(title="Homozygositeit - M1",
+       x = "Jaar",
+       y = "Proportie",
+       color = "Bekken"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )
+
+#########################################################
+
+homozygosity_table_M2<-read.csv("data/Tabellen/homozygosity_table_M2.csv",sep=";",dec=",")
+homozygosity_table_M2<-homozygosity_table_M2[-which(homozygosity_table_M2$BekkenNaam=="BR"),]
+
+# Melt the data for ggplot
+homozygosity_table_melted <- melt(homozygosity_table_M2, id.vars = "BekkenNaam", variable.name = "Year", value.name = "Value")
+homozygosity_table_melted$Year <- as.numeric(gsub("X", "", homozygosity_table_melted$Year)) # Clean up year column
+
+
+# Remove rows with NA values
+homozygosity_table_cleaned <- homozygosity_table_melted[!is.na(homozygosity_table_melted$Value), ]
+
+# Create the plot
+ggplot(homozygosity_table_cleaned, aes(x = Year, y = Value, color = BekkenNaam, group = BekkenNaam)) +
+  geom_line(size = 1) +
+  geom_point() +
+  labs(title="Homozygositeit - M2",
+       x = "Jaar",
+       y = "Proportie",
+       color = "Bekken"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )
 
 
