@@ -35,6 +35,8 @@ read_and_assign <- function(file_path) {
 # Apply the function to each file in the list
 lapply(file_list, read_and_assign)
 
+
+
 ###################################################
 resistent_table
 
