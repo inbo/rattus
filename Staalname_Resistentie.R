@@ -357,13 +357,13 @@ data_staalname_df$Genotype[which(data_staalname_df$Genotype=="NoData")]<-NA
 
 # Custom colors for the Call_final factor levels
 custom_colors <- c(#"NA" = "grey", 
-                   "M1W" = "coral",     # light red-pink-ish
+                   "M1W" = "deeppink",     # light red-pink-ish
                    "M1M1" = "red", 
-                   "WW" = "darkslategrey", 
-                   "M2W" = "cornflowerblue", 
-                   "M3W" = "yellow", 
-                   "M2M2" = "navy",
-                   "M1M2" = "darkviolet",
+                   "WW" = "grey", 
+                   "M2W" = "turquoise1", 
+                   "M3W" = "khaki1", 
+                   "M2M2" = "blue",
+                   "M1M2" = "purple",
                    "M1M3" = "orange")
 
 # Filter out rows with NA in Lat or Lon
