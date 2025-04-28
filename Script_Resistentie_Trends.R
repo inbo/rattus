@@ -36,6 +36,15 @@ read_and_assign <- function(file_path) {
 lapply(file_list, read_and_assign)
 
 
+#Export EVMC
+install.packages("openxlsx")
+library(openxlsx)
+
+# Write to Excel
+#write.xlsx(M2_table, file = "M2_table.xlsx")
+
+
+
 
 ###################################################
 resistent_table
@@ -202,6 +211,11 @@ ggplot(M2_table_cleaned, aes(x = Year, y = Value, color = BekkenNaam, group = Be
     axis.title = element_text(size = 14),
     legend.position = "right"
   )
+######
+#export for evmc
+
+resistent_table
+resistent_table_corrected
 
 
 ######################################################
